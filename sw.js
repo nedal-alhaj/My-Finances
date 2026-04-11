@@ -2,8 +2,7 @@ const CACHE_NAME = 'my-finances-v2';
 const STATIC_ASSETS = [
   './',
   './index.html',
-  './manifest.json',
-  './icons/icon.svg'
+  './manifest.json'
 ];
 
 // Install
@@ -47,8 +46,8 @@ self.addEventListener('fetch', (e) => {
 self.addEventListener('push', (e) => {
   const options = {
     body: e.data ? e.data.text() : 'لديك تنبيه مالي جديد!',
-    icon: '/icons/icon.svg',
-    badge: '/icons/icon.svg',
+    icon: './icons/icon.svg',
+    badge: './icons/icon.svg',
     vibrate: [100, 50, 100],
     data: { dateOfArrival: Date.now() },
     dir: 'rtl',
