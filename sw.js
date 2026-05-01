@@ -1,14 +1,13 @@
-const CACHE_NAME = 'my-finances-v3';
+const CACHE_NAME = 'my-finances-v4';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.svg',
   './icon-192.png',
   './icon-512.png'
 ];
 
-// Install
+// Install - Cache assets
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -18,7 +17,7 @@ self.addEventListener('install', (e) => {
   self.skipWaiting();
 });
 
-// Activate
+// Activate - Clean old caches
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -31,16 +30,19 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Fetch
+// Fetch - Network first, fallback to cache
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((resp) => {
-      return resp || fetch(e.request).then((response) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(e.request, response.clone());
-          return response;
+    fetch(e.request).then((response) => {
+      if (response && response.status === 200) {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(e.request, responseClone);
         });
-      });
+      }
+      return response;
+    }).catch(() => {
+      return caches.match(e.request);
     })
   );
 });
@@ -54,9 +56,23 @@ self.addEventListener('push', (e) => {
     vibrate: [100, 50, 100],
     data: { dateOfArrival: Date.now() },
     dir: 'rtl',
-    lang: 'ar'
+    lang: 'ar',
+    actions: [
+      { action: 'open', title: 'فتح التطبيق' },
+      { action: 'close', title: 'إغلاق' }
+    ]
   };
   e.waitUntil(
-    self.registration.showNotification('My Finances', options)
+    self.registration.showNotification('مالياتى', options)
   );
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  if (e.action === 'open') {
+    e.waitUntil(
+      clients.openWindow('./index.html')
+    );
+  }
 });
